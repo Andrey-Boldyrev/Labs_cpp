@@ -10,7 +10,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
-#include "header.h"
+#include "Account.h"
 
 using namespace std;
 
@@ -114,18 +114,18 @@ void Task()
 			Ob.Display();
 			break;
 		}
-
+		double ans;
 		case 5:
 		{
-			Ob.TransferMoneyInDollar();
-			Ob.Display();
+			ans=Ob.TransferMoneyInDollar();
+			cout << "Answer: " << ans << endl;
 			break;
 		}
 
 		case 6:
 		{
-			Ob.TransferMoneyInEuro();
-			Ob.Display();
+			ans=Ob.TransferMoneyInEuro();
+			cout << "Answer: " << ans << endl;
 			break;
 		}
 
@@ -142,5 +142,6 @@ void Task()
 int main()
 {
 	Task();
+	system("pause");
 	return 0;
 }
