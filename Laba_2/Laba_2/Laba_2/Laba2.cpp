@@ -91,7 +91,7 @@ void Task()
 			int money;
 			cout << "Enter sum: ";
 			cin >> money;
-			Ob - money;
+			Ob -= money;
 			//Ob.MinusMoney(money);
 			Ob.Display();
 			break;
@@ -103,7 +103,7 @@ void Task()
 			cout << "Enter sum: ";
 			cin >> money;
 			//Ob.PlusMoney(money);
-			Ob + money;
+			Ob += money;
 			Ob.Display();
 			break;
 		}

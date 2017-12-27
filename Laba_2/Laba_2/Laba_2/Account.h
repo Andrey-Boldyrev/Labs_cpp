@@ -24,10 +24,10 @@ public:
 	void ChangeOwner(string n);
 
 	//переопределение сложения
-	void operator +(int m);
+	void operator +=(int m);
 
 	//переопределения вычитания
-	void operator -(int m);
+	void operator -=(int m);
 
 	//снятие денег
 	void MinusMoney(int sum);

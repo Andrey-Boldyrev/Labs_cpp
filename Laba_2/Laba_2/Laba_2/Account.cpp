@@ -27,13 +27,13 @@ void Account::ChangeOwner(string n)
 }
 
 //переопределение сложения
-void Account::operator +(int m)
+void Account::operator +=(int m)
 {
 	this->money += m;
 }
 
 //переопределения вычитания
-void Account::operator -(int m)
+void Account::operator -=(int m)
 {
 	this->money -= m;
 }
