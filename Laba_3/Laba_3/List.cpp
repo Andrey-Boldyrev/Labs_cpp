@@ -23,7 +23,6 @@ void DoublyLinkedList<ValueType>::addBackToList(const ValueType &data)
 	Element *temp = new Element(data, Tail, nullptr);	//Выделение памяти под новый элемент структуры
 	if (Head == nullptr)	//если это первый элемент, то
 	{
-		//temp>prev = nullptr;	//обнуляем указатель на предшествующий элемент т.к. его нет
 		Head = Tail = temp;	//Голова=Хвост=тот элемент, что сейчас добавили
 	}
 	else //если не первый, то
@@ -41,7 +40,6 @@ void DoublyLinkedList<ValueType>::addBehindToList(const ValueType &data)
 	Element *temp = new Element(data, nullptr, Head);	//создается временный элемент
 	if (Head == nullptr)	//если это первый элемент, то
 	{
-		//	temp->prev = nullptr;	//обнуляем указатель на предшествующий элемент т.к. его нет
 		Head = Tail = temp;	//Голова=Хвост=тот элемент, что сейчас добавили
 	}
 	else	//если не первый, то
