@@ -47,7 +47,6 @@ ofstream RndFileCycle(string fname, int N, int M)
 	return file;
 }
 
-
 ofstream RndFileGen(string fname, int N, int M)
 {
 	ofstream file(fname);
@@ -66,8 +65,6 @@ ofstream RndFileGen(string fname, int N, int M)
 
 	return file;
 }
-
-
 
 list<double> LoadListFromFile(string fname)
 {
