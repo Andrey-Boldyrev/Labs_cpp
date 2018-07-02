@@ -34,50 +34,180 @@ kom_plat::kom_plat(string AFIO,string Astreet,int Ahouse, int Aroom,   string Ap
 	day_delay_pay = Aday_delay_pay;	
 }
 
-kom_plat::~kom_plat()
-{
+kom_plat::~kom_plat(){}
+
+
+bool correct_symbol(char c) {
+	switch (c)
+	{
+	case '1':
+	case '2':
+	case '3':
+	case '4':
+	case '5':
+	case '6':
+	case '7':
+	case '8':
+	case '9':
+	case '0':
+		return true;
+	default:
+		return false;
+	}
+}
+
+//проверка на корректный цифру
+bool correct_number(string s) {
+	bool is_correct = true;
+	for (int i = 0; ((i < s.length()) && (is_correct)); i++) {
+		is_correct = correct_symbol(s[i]);
+	}
+	is_correct = is_correct && (s.length() < 9);
+	return is_correct;
 
 }
 
-void kom_plat::print_record()
+//перевод даты в строку
+string date_to_str(date d) {
+	string result;
+	result = to_string(d.day) + "." + to_string(d.month) + "." + to_string(d.year);
+	return result;
+}
+
+//строка в дату
+date str_to_date(string str) {
+	date result;
+
+	result.day = (int)(str[0] - '0');
+	int i = 1;
+	while (str[i] != '.') {
+		result.day *= 10;
+		result.day += (int)(str[i] - '0');
+		i++;
+	}
+	i++;
+	result.month = (int)(str[i] - '0');
+	i++;
+	while (str[i] != '.') {
+		result.month *= 10;
+		result.month += (int)(str[i] - '0');
+		i++;
+	}
+	i++;
+	result.year = (int)(str[i] - '0');
+	i++;
+	while (i < str.length()) {
+		result.year *= 10;
+		result.year += (int)(str[i] - '0');
+		i++;
+	}
+	return result;
+}
+
+void kom_plat::print_record() 
 {
-	cout << FIO << "\t" << street << ";" << house << ";"<<room<<"\t\t"  << pay_type << "\t\t" << pay_cost
+	cout << FIO << "\t" << street << ";" << house << ";" << room << "\t\t" << pay_type << "\t\t" << pay_cost
 		<< "\t\t" << peni_percent << "\t\t" << day_delay_pay << "\t\t\t" << pay_date.day
 		<< "." << pay_date.month << "." << pay_date.year << "\n";
 }
-
-string input_filename() {
-	string filename;
-	do {
-		cout << "Input file name\n";
-		cin >> filename;
-	} while (filename == "");
-	return filename;
+//вывод на экран
+void print_v(vector<kom_plat> &v)
+{
+	cout << "FIO\t\tAddress\t\tPay type\tPay cost\tPeni percent\tDays delay payment\tPay date" << endl;
+	for (vector<kom_plat>::iterator it = v.begin(); it != v.end(); it++) (*it).print_record();
 }
 
-void load_file(vector<kom_plat> &vect) {
+// чтение строки из бинарного файла
+bool string_from_bin(ifstream& in, string &str)
+{
+	__int64 len;
+	if (in.read((char *)(&len), sizeof(len))) {
+		char * buf = new char[len];
+		if (in.read((char *)(buf), len)) {
+			str = buf;
+			return true;
+		}
+	}
+	return false;
+}
 
-	string filename = input_filename();
-
+//чтение одной записи
+bool load_one_rec(ifstream& in, kom_plat &plat) {
+	bool result = true;
+	string tmp_str;
+	if (string_from_bin(in, tmp_str)) plat.FIO = (tmp_str);
+	else result = false;
+	if (result&&string_from_bin(in, tmp_str)) plat.room=(stoi(tmp_str));
+	else result = false;
+	if (result&&string_from_bin(in, tmp_str)) plat.house= (stoi(tmp_str));
+	else result = false;
+	if (result&&string_from_bin(in, tmp_str)) plat.street=(tmp_str);
+	else result = false;
+	if (result&&string_from_bin(in, tmp_str)) plat.pay_type=(tmp_str);
+	else result = false;
+	if (result&&string_from_bin(in, tmp_str)) plat.pay_date=(str_to_date(tmp_str));
+	else result = false;
+	if (result&&string_from_bin(in, tmp_str)) plat.pay_cost=(stoi(tmp_str));
+	else result = false;
+	if (result&&string_from_bin(in, tmp_str)) plat.peni_percent=(stoi(tmp_str));
+	else result = false;
+	if (result&&string_from_bin(in, tmp_str)) plat.day_delay_pay=(stoi(tmp_str));
+	else result = false;
+	return result;
+}
+//загрузка из бинарного файла
+void load_binary_file(vector<kom_plat> &vect) 
+{
+	string filename ="1.dat";
 	ifstream in(filename, ios::binary);
 	if (!in.is_open()) {
 		cout << "Enabled to open file\n";
 		return;
 	}
-	else {
-		while (!in.eof())
+	if (in.eof())
+	{
+		cout << "file is empty\n";
+		return;
+	}
+	else
+	{
+		kom_plat plat;
+		while (load_one_rec(in, plat)) 
 		{
-			kom_plat *plat = new kom_plat();
-			in.read((char*)&plat, sizeof(kom_plat));
-			vect.insert(vect.end(), *plat);
-		}
+		vect.push_back(plat);
+	}
 	}
 	in.close();
 }
 
-void print_v(vector<kom_plat> &v) {
-	cout << "FIO\t\tAddress\t\tPay type\tPay cost\tPeni percent\tDays delay payment\tPay date" << endl;
-	for (vector<kom_plat>::iterator it = v.begin(); it != v.end(); it++) (*it).print_record();
+
+// запись строки в бинарный файл
+void string_to_bin(ofstream& out, string str)
+{
+	__int64 len = str.length() + 1;
+	const char *buf = str.c_str();
+	out.write((char *)(&len), sizeof(len));
+	out.write((char *)(buf), len);
+}
+
+//сохранение в бинарный файл
+void save_binary(vector<kom_plat> &v) {
+	string filename = "1.dat";
+	string tmp_str;
+	ofstream out(filename, ios_base::out | ios_base::trunc);
+	for (auto &plat : v)
+	{
+		string_to_bin(out, plat.FIO);
+		string_to_bin(out, to_string(plat.room));
+		string_to_bin(out, to_string(plat.house));
+		string_to_bin(out, plat.street);
+		string_to_bin(out, plat.pay_type);
+		string_to_bin(out, date_to_str(plat.pay_date));
+		string_to_bin(out, to_string(plat.pay_cost));
+		string_to_bin(out, to_string(plat.peni_percent));
+		string_to_bin(out, to_string(plat.day_delay_pay));
+	}
+	out.close();
 }
 
 bool contains(vector<kom_plat> v, string str) {
@@ -86,6 +216,7 @@ bool contains(vector<kom_plat> v, string str) {
 	}
 	return false;
 }
+
 kom_plat input_kom_plat() {
 	string tmp_FIO;
 	int tmp_room;
@@ -130,12 +261,8 @@ kom_plat input_kom_plat() {
 
 void add_v(vector<kom_plat> &v) {
 	kom_plat cur = input_kom_plat();
-	//if (!contains(v, cur.FIO)) {
-		v.insert(v.end(), cur);
-		cout << "Record added!" << endl;
-	//}
-	//else cout << "Such abonent already exist.\n";
-
+	v.insert(v.end(), cur);
+	cout << "Record added!" << endl;
 }
 
 void delete_v(vector<kom_plat> &v) {
@@ -143,7 +270,7 @@ void delete_v(vector<kom_plat> &v) {
 	cout << "Input abonents's FIO for delete: ";
 	cin >> str;
 	vector<kom_plat>::iterator it = v.begin();
-	while ((*it).FIO != str && it != v.end()) it++;
+	while (it != v.end() && (*it).FIO != str ) it++;
 	if (it != v.end())
 	{
 		v.erase(it);
@@ -164,29 +291,6 @@ void exchange_v(vector<kom_plat> &v) {
 		add_v(v);
 	}//заменить по запросу!
 	else cout << "Such abonent doesn't exist!" << endl;
-}
-
-void save_binary(vector<kom_plat> &v) {
-	string filename = input_filename();
-	ofstream out(filename, ios::binary);
-	for  (auto &plat:v)
-	{
-		out.write((char*)&plat, sizeof(kom_plat));
-	}
-	out.close();
-}
-
-void save_file(vector<kom_plat> &v) {
-	string filename = input_filename();
-	ofstream file;
-	file.open(filename, ios::out);
-	for (vector<kom_plat>::iterator it = v.begin(); it != v.end(); it++)
-	{
-		file << (*it).FIO << "\t\t" << (*it).street<<";"<< (*it).house<<";"
-			<< (*it).room<<";" << "\t" << (*it).pay_type << "\t" << (*it).pay_cost << "\t"
-			<< (*it).peni_percent << "\t" << (*it).day_delay_pay << "\t\t" << (*it).pay_date.day
-			<< "." << (*it).pay_date.month << "." << (*it).pay_date.year << endl;
-	}
 }
 
 //компараторы
@@ -273,13 +377,11 @@ bool equals_date( kom_plat & a, date datequery) {
 	return false;
 }
 
-
-
 template <class T>
-vector<kom_plat> lin_search(T search_elem, vector<kom_plat> &v, bool(*equals)(kom_plat &, T)) {
+vector<kom_plat> lin_search(T search_elem,vector<kom_plat> &v, bool(*equals)(kom_plat &, T)) {
 	vector<kom_plat> results;
 	vector<kom_plat>::iterator v_it = v.begin();
-
+	
 	while (v_it != v.end())
 	{
 		if (equals(*v_it, search_elem)) results.insert(results.end(), *v_it);
@@ -288,166 +390,27 @@ vector<kom_plat> lin_search(T search_elem, vector<kom_plat> &v, bool(*equals)(ko
 	return results;
 }
 
-/*
-vector<kom_plat> lin_str(vector<kom_plat> &v, bool(*equals)( kom_plat &, string)) {
-	vector<kom_plat> results;
-	vector<kom_plat>::iterator v_it = v.begin();
-	string strquery;
-	cin >> strquery;
-
-	while (v_it != v.end())
-	{
-		if (equals(*v_it, strquery)) results.insert(results.end(), *v_it);
-		v_it++;
-	}
-	return results;
-}
-
-vector<kom_plat> lin_int(vector<kom_plat> &v, bool(*equals)( kom_plat &, int)) {
-	vector<kom_plat> results;
-	vector<kom_plat>::iterator v_it = v.begin();
-	int intquery;
-	cin >> intquery;
-
-	while (v_it != v.end())
-	{
-		if (equals(*v_it, intquery)) results.insert(results.end(), *v_it);
-		v_it++;
-	}
-	return results;
-}
-
-vector<kom_plat> lin_date(vector<kom_plat> &v, bool(*equals)( kom_plat &, date)) {
-	vector<kom_plat> results;
-	vector<kom_plat>::iterator v_it = v.begin();
-	cout << "day,month, year through the space";
-	date datequery;
-	cin >> datequery.day >> datequery.month >> datequery.year;
-
-	while (v_it != v.end())
-	{
-		if (equals(*v_it, datequery))
-			results.insert(results.end(), *v_it);
-		v_it++;
-	}
-	return results;
-}
-*/
-
-
-/*template <class Type>
-vector<Type> Task<Type>::BinarySearch(Type find_element, bool(*Compare)(Type, Type), bool(*Equal)(Type, Type))
-{
-	vector<Type> NewVect;
-
-	sort(vect.begin(), vect.end(), Compare);
-	auto index = std::lower_bound(vect.begin(), vect.end(), find_element, Compare);
-	int left = 0;
-	int right = vect.size();
-	if (index != vect.end() && !Compare(*index, find_element))
-	{
-		NewVect.push_back(*index);
-		while ((++index != vect.end()) && Equal(*index, find_element))
-		NewVect.push_back(*index);
-	}
-	return NewVect;
-}*/
-
-/*
-template <class T>
-vector<kom_plat> bin_search(T search_elem, vector<kom_plat> &v, bool(*comparator_rec)(kom_plat &, kom_plat &),
-	bool(*comparator)(kom_plat &, T), bool(*equals)(kom_plat &, T)) 
-{
-	vector<kom_plat> results;
-	vector<kom_plat>::iterator v_it = v.begin();
-
-	sort(v.begin(), v.end(), comparator_rec);
-	v_it = lower_bound(v.begin(), v.end(), search_elem, comparator);
-	while (equals(*v_it, search_elem)) 
-	{
-		results.insert(results.end(), *v_it);
-		v_it++;
-	}
-	return results;
-}*/
-
 template <class T>
 vector<kom_plat> bin_search(T search_elem, vector<kom_plat> &v, bool(*comparator_rec)(kom_plat &, kom_plat &),
 	bool(*comparator)(kom_plat &, T), bool(*equals)(kom_plat &, T))
 {
 	vector<kom_plat> results;
-	vector<kom_plat>::iterator v_it = v.begin();
 
 	sort(v.begin(), v.end(), comparator_rec);
 	auto index = std::lower_bound(v.begin(), v.end(), search_elem, comparator);
 	int left = 0;
-	int right = v.size();
+	int right = (int)v.size();
 	if (index != v.end() && !comparator(*index, search_elem))
 	{
 		results.insert(results.end(), *index);
 		while ((++index != v.end()) && (equals(*index, search_elem)))
 		{
 			results.insert(results.end(), *index);
-			
+
 		}
 	}
 	return results;
 }
-
-
-
-
-/*
-vector<kom_plat> bin_str(vector<kom_plat> &v, bool(*comparator_rec)( kom_plat &,  kom_plat &),
-	bool(*comparator)( kom_plat &, string), bool(*equals)( kom_plat &, string)) {
-	vector<kom_plat> results;
-	vector<kom_plat>::iterator v_it = v.begin();
-	string strquery;
-	cin >> strquery;
-
-	sort(v.begin(), v.end(), comparator_rec);
-	v_it = lower_bound(v.begin(), v.end(), strquery, comparator);
-	while (equals(*v_it, strquery)) {
-		results.insert(results.end(), *v_it);
-		v_it++;
-	}
-	return results;
-}
-
-vector<kom_plat> bin_int(vector<kom_plat> &v, bool(*comparator_rec)( kom_plat &,  kom_plat &),
-	bool(*comparator)( kom_plat &, int), bool(*equals)( kom_plat &, int)) {
-	vector<kom_plat> results;
-	vector<kom_plat>::iterator v_it = v.begin();
-	int intquery;
-	cin >> intquery;
-
-	sort(v.begin(), v.end(), comparator_rec);
-	v_it = lower_bound(v.begin(), v.end(), intquery, comparator);
-	while (equals(*v_it, intquery)) {
-		results.insert(results.end(), *v_it);
-		v_it++;
-	}
-	return results;
-}
-
-
-
-vector<kom_plat> bin_date(vector<kom_plat> &v, bool(*comparator_rec)( kom_plat &,  kom_plat &),
-	bool(*comparator)( kom_plat &, date), bool(*equals)( kom_plat &, date)) {
-	vector<kom_plat> results;
-	vector<kom_plat>::iterator v_it = v.begin();
-	cout << "day,month, year through the space";
-	date datequery;
-	cin >> datequery.day >> datequery.month >> datequery.year;
-
-	sort(v.begin(), v.end(), comparator_rec);
-	v_it = lower_bound(v.begin(), v.end(), datequery, comparator);
-	while (equals(*v_it, datequery)) {
-		results.insert(results.end(), *v_it);
-		v_it++;
-	}
-	return results;
-}*/
 
 vector<kom_plat> search(vector<kom_plat> &v) {
 	vector<kom_plat> results;
@@ -473,29 +436,29 @@ vector<kom_plat> search(vector<kom_plat> &v) {
 		case 1: {
 			string strquery;
 			cin >> strquery;
-			results = lin_search(strquery,v, equals_FIO); }
-			break;
+			results = lin_search(strquery, v, equals_FIO); }
+				break;
 		case 2: {
 			int intquery;
 			cin >> intquery;
-			results = lin_search(intquery,v, equals_room); }
-			break;
+			results = lin_search(intquery, v, equals_room); }
+				break;
 		case 3: {
 			int intquery;
 			cin >> intquery;
-			results = lin_search(intquery,v, equals_house); }
-			break;
+			results = lin_search(intquery, v, equals_house); }
+				break;
 		case 4: {
 			int intquery;
 			cin >> intquery;
-			results = lin_search(intquery,v, equals_delay_pay); }
-			break;
+			results = lin_search(intquery, v, equals_delay_pay); }
+				break;
 		case 5: {
-			cout << "day,month, year through the space: ";
+			cout << "day,month, year through the space";
 			date datequery;
 			cin >> datequery.day >> datequery.month >> datequery.year;
-			results = lin_search(datequery,v, equals_date); }
-			break;
+			results = lin_search(datequery, v, equals_date); }
+				break;
 		}
 	} break;
 
@@ -506,29 +469,29 @@ vector<kom_plat> search(vector<kom_plat> &v) {
 		case 1: {
 			string strquery;
 			cin >> strquery;
-			results = bin_search(strquery,v, FIO_rec_plat, FIO_plat, equals_FIO); }
-			break;
+			results = bin_search(strquery, v, FIO_rec_plat, FIO_plat, equals_FIO); }
+				break;
 		case 2: {
 			int intquery;
 			cin >> intquery;
 			results = bin_search(intquery, v, room_rec_plat, room_plat, equals_room); }
-			break;
+				break;
 		case 3: {
 			int intquery;
 			cin >> intquery;
 			results = bin_search(intquery, v, house_rec_plat, house_plat, equals_house); }
-			break;
+				break;
 		case 4: {
 			int intquery;
 			cin >> intquery;
-			results = bin_search(intquery,v, delayPay_rec_plat, delayPay_plat, equals_delay_pay); }
-			break;
+			results = bin_search(intquery, v, delayPay_rec_plat, delayPay_plat, equals_delay_pay); }
+				break;
 		case 5: {
 			cout << "day,month, year through the space: ";
 			date datequery;
 			cin >> datequery.day >> datequery.month >> datequery.year;
-			results = bin_search(datequery,v, date_rec_plat, date_plat, equals_date); }
-			break;
+			results = bin_search(datequery, v, date_rec_plat, date_plat, equals_date); }
+				break;
 		}
 	} break;
 	}
